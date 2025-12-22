@@ -18,9 +18,10 @@ BATCH_SIZE = 32
 LABEL_MODE = "categorical"
 
 def import_and_create_train_test_ds(train_dir, 
-                                    test_dir, 
-                                    image_size=(224, 224), 
-                                    batch_size=32): 
+                                    test_dir,
+                                    label_model=LABEL_MODE,
+                                    image_size=IMG_SIZE, 
+                                    batch_size=BATCH_SIZE): 
     """
     Imports and creates TensorFlow training and testing datasets from the provided directories.
 
@@ -45,17 +46,17 @@ def import_and_create_train_test_ds(train_dir,
     """
     train_ds = tf.keras.preprocessing.image_dataset_from_directory(
         train_dir, 
-        image_size=IMG_SIZE, 
-        batch_size=BATCH_SIZE, 
-        label_mode=LABEL_MODE, 
+        image_size=image_size, 
+        batch_size=batch_size, 
+        label_mode=label_model, 
         seed=42
     )
 
     test_ds = tf.keras.preprocessing.image_dataset_from_directory(
         test_dir, 
-        image_size=IMG_SIZE, 
-        batch_size=BATCH_SIZE, 
-        label_mode=LABEL_MODE,
+        image_size=image_size, 
+        batch_size=batch_size, 
+        label_mode=label_model,
         seed=42
     )
 
@@ -296,3 +297,61 @@ def calculate_results(y_true, y_pred):
                   "recall": model_recall,
                   "f1": model_f1}
   return model_results
+
+
+import math
+import numpy as np
+import matplotlib.pyplot as plt
+
+def view_same_image_multiple_augmentations(
+    data_ds,
+    data_augmentation,
+    num_images=4,
+    num_augments=4,
+    img_size=3.5,
+    show_original=True,
+):
+    class_names = getattr(data_ds, "class_names", None)
+
+    images, labels = next(iter(data_ds))
+    images = images[:num_images]
+    labels = labels[:num_images]
+
+    cols = num_augments + (1 if show_original else 0)
+    rows = num_images
+
+    plt.figure(figsize=(cols * img_size, rows * img_size))
+
+    plot_idx = 1
+    for i in range(num_images):
+        # label
+        if labels.ndim == 1:
+            label_idx = int(labels[i].numpy())
+        else:
+            label_idx = int(np.argmax(labels[i].numpy()))
+        label_name = class_names[label_idx] if class_names else str(label_idx)
+
+        # original
+        if show_original:
+            plt.subplot(rows, cols, plot_idx)
+            plt.imshow(images[i].numpy().astype("uint8"))
+            plt.title(f"{label_name}\n(original)", fontsize=12)
+            plt.axis("off")
+            plot_idx += 1
+
+        # augmented versions (same image, multiple draws)
+        for j in range(num_augments):
+            plt.subplot(rows, cols, plot_idx)
+
+            aug_img = data_augmentation(images[i], training=True).numpy()
+
+            if aug_img.dtype != np.uint8:
+                aug_img = np.clip(aug_img, 0, 255).astype("uint8")
+
+            plt.imshow(aug_img)
+            plt.title(f"aug {j+1}", fontsize=11)
+            plt.axis("off")
+            plot_idx += 1
+
+    plt.tight_layout()
+    plt.show()
