@@ -57,7 +57,7 @@ def import_and_create_train_test_ds(train_dir,
         image_size=image_size, 
         batch_size=batch_size, 
         label_mode=label_model,
-        seed=42
+        shuffle=False
     )
 
     return train_ds, test_ds
