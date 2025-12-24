@@ -355,3 +355,42 @@ def view_same_image_multiple_augmentations(
 
     plt.tight_layout()
     plt.show()
+
+
+def compare_history(original_history, new_history): 
+    initial_epochs=original_history.epoch[-1]
+
+    ## Original history measurements 
+    acc = original_history.history['accuracy']
+    loss = original_history.history['loss']
+
+    val_acc = original_history.history['val_accuracy']
+    val_loss = original_history.history['val_loss']
+
+    # Combine with new history 
+
+    total_acc = acc + new_history.history['accuracy']
+    total_loss = loss + new_history.history['loss']
+
+    total_val_acc = val_acc + new_history.history['val_accuracy']
+    total_val_loss = val_loss + new_history.history['val_loss']
+
+    ## Plot total_acc and total_val_acc 
+    plt.figure(figsize=(8, 8))
+
+    plt.subplot(2, 1, 1)
+    plt.plot(total_acc, label="accuracy")
+    plt.plot(total_val_acc, label="val_accuracy")
+    plt.plot([initial_epochs, initial_epochs], plt.ylim(), label="Start Fine Tuning")
+    plt.legend() 
+    plt.title("Traning and Validation Accuracy")
+
+    plt.subplot(2, 1, 2)
+
+    plt.plot(total_loss, label="loss")
+    plt.plot(total_val_loss, label="val_loss")
+    plt.plot([initial_epochs, initial_epochs], plt.ylim(), label="Start Fine Tuning")
+    plt.legend()
+
+    plt.title("Traning and Validation Losses")
+    
